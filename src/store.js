@@ -5,9 +5,7 @@ const EMPTY = {
   viewer: null,
   profile: null,
   feed: [],
-  firstSeen: {}, // fullName → ms timestamp it first showed up in the feed
   dismissed: {}, // fullName → ms timestamp
-  seenWatermark: null, // items first seen after this are "new"
   lastRefresh: null,
   lastError: null,
 };

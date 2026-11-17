@@ -3,7 +3,7 @@ import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { join } from 'node:path';
 import { assertRepoName, createClient, getToken } from './src/github.js';
-import { buildProfile, DAY } from './src/profile.js';
+import { buildProfile } from './src/profile.js';
 import { createScorer, dropCloneClusters, fetchCandidates, isEligible, similarStarred, slimRepo } from './src/recommend.js';
 import { loadState, saveState } from './src/store.js';
 
@@ -42,18 +42,10 @@ async function doRefresh() {
     .slice(0, FEED_SIZE)
     .map((item) => ({ ...item, similar: similarStarred(item.topics, starredLite) }));
 
-  for (const item of feed) state.firstSeen[item.fullName] ??= started;
-  // forget first-seen dates for repos that left the feed long ago
-  const inFeed = new Set(feed.map((i) => i.fullName));
-  for (const [name, ts] of Object.entries(state.firstSeen)) {
-    if (!inFeed.has(name) && started - ts > 180 * DAY) delete state.firstSeen[name];
-  }
-
   Object.assign(state, {
     viewer: { login: viewer.login, avatar: viewer.avatar_url, url: viewer.html_url },
     profile,
     feed,
-    seenWatermark: state.seenWatermark ?? started, // first run: nothing is "new" yet
     lastRefresh: started,
     lastError: null,
   });
@@ -79,10 +71,8 @@ function feedPayload() {
     lastRefresh: state.lastRefresh,
     lastError: state.lastError,
     refreshing: Boolean(refreshing),
-    seenWatermark: state.seenWatermark,
     items: state.feed.map((item) => ({
       ...item,
-      firstSeen: state.firstSeen[item.fullName] ?? null,
       dismissed: item.fullName in state.dismissed,
     })),
   };
@@ -102,11 +92,6 @@ const api = {
   'POST /api/refresh': async () => {
     await refresh();
     return feedPayload();
-  },
-  'POST /api/seen': async () => {
-    state.seenWatermark = Date.now();
-    await saveState(STATE_FILE, state);
-    return { seenWatermark: state.seenWatermark };
   },
   'POST /api/dismiss': async ({ fullName, undo }) => {
     assertRepoName(fullName);

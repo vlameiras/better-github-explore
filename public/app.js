@@ -30,7 +30,7 @@ async function api(path, body) {
   return json;
 }
 
-const isNew = (item) => item.firstSeen && data.seenWatermark && item.firstSeen > data.seenWatermark;
+const isNew = (item) => Date.now() - Date.parse(item.createdAt) < 2 * DAY; // created in the last 48h
 
 function visibleItems() {
   const q = ui.q.trim().toLowerCase();
@@ -143,7 +143,6 @@ function render() {
 
   const newCount = data.items.filter((i) => !i.dismissed && isNew(i)).length;
   $('#new-count').textContent = newCount || '';
-  $('#mark-seen').hidden = !newCount;
 
   for (const b of document.querySelectorAll('#views button')) {
     b.setAttribute('aria-selected', String(b.dataset.view === ui.view));
@@ -164,7 +163,7 @@ function render() {
   empty.textContent = !data.lastRefresh
     ? 'Building your first feed. This takes about 20 seconds.'
     : ui.view === 'new'
-      ? 'Nothing new since you last marked everything seen. Check back after the next refresh.'
+      ? 'Nothing created in the last 48 hours matches your taste yet. Check back after the next refresh.'
       : ui.view === 'dismissed'
         ? 'Nothing dismissed.'
         : 'No repos match these filters.';
@@ -256,13 +255,6 @@ $('#refresh').onclick = async () => {
   } catch (err) {
     toast(`Refresh failed: ${esc(err.message)}`);
   }
-  render();
-};
-
-$('#mark-seen').onclick = async () => {
-  const { seenWatermark } = await api('/api/seen', {});
-  data.seenWatermark = seenWatermark;
-  if (ui.view === 'new') ui.view = 'all';
   render();
 };
 

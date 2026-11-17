@@ -260,5 +260,4 @@ input[type='search'] { width: 180px; }
   input[type='search'] { flex: 1; width: auto; }
   .seg { max-width: 100%; overflow-x: auto; }
   .match-bar { display: none; }
-  #mark-seen { display: none; }
 }
