@@ -2,6 +2,8 @@
 
 A personal discovery feed for GitHub, ranked by what you've starred.
 
+![Better GitHub Explore showing a ranked feed with a taste profile sidebar](docs/screenshot.png)
+
 It reads your most recent stars, builds a weighted taste profile (topics, languages, keywords; recent stars count more), searches GitHub for fresh repos in those areas, and ranks them by fit and momentum (stars per day). Spam clones, archived repos, your own repos and unpopular forks are filtered out.
 
 ## Run
