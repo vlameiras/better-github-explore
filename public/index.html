@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Better Explore</title>
+    <link rel="stylesheet" href="/style.css" />
+  </head>
+  <body>
+    <header class="top">
+      <div class="wrap top-inner">
+        <div class="brand">
+          <span class="logo" aria-hidden="true">◆</span>
+          <div>
+            <h1>Better Explore</h1>
+            <p class="sub" id="status">Loading…</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button class="btn ghost" id="mark-seen" hidden>Mark all seen</button>
+          <button class="btn" id="refresh">Refresh</button>
+          <a class="me" id="me" hidden></a>
+        </div>
+      </div>
+    </header>
+
+    <div class="wrap layout">
+      <aside class="taste" id="taste" aria-label="Your taste profile"></aside>
+
+      <main>
+        <div class="controls">
+          <div class="seg" role="tablist" id="views">
+            <button role="tab" data-view="all" aria-selected="true">For you</button>
+            <button role="tab" data-view="new">New <span class="count" id="new-count"></span></button>
+            <button role="tab" data-view="week">This week</button>
+            <button role="tab" data-view="dismissed">Dismissed</button>
+          </div>
+          <div class="controls-right">
+            <input type="search" id="q" placeholder="Filter…" aria-label="Filter repositories" />
+            <select id="sort" aria-label="Sort">
+              <option value="score">Best match</option>
+              <option value="momentum">Fastest rising</option>
+              <option value="newest">Newest</option>
+            </select>
+          </div>
+        </div>
+        <div class="active-filter" id="active-filter" hidden></div>
+        <ol class="feed" id="feed"></ol>
+        <p class="empty" id="empty" hidden></p>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" role="status" hidden></div>
+    <script type="module" src="/app.js"></script>
+  </body>
+</html>

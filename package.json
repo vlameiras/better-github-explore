@@ -1,0 +1,15 @@
+{
+  "name": "better-github-explore",
+  "version": "0.1.0",
+  "private": true,
+  "description": "A personal GitHub discovery feed ranked by what you've starred.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "node --test"
+  }
+}
