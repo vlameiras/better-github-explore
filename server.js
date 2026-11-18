@@ -1,124 +1,53 @@
+// Local mode: serves the same static site that GitHub Pages hosts, plus a `/gh/*` proxy that adds
+// your GitHub token. The browser does all the work; the token never reaches the page.
 import http from 'node:http';
+import { execFileSync } from 'node:child_process';
 import { readFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
-import { join } from 'node:path';
-import { assertRepoName, createClient, getToken } from './src/github.js';
-import { buildProfile } from './src/profile.js';
-import { createScorer, dropCloneClusters, fetchCandidates, isEligible, similarStarred, slimRepo } from './src/recommend.js';
-import { loadState, saveState } from './src/store.js';
+import { extname, join, normalize } from 'node:path';
 
 const ROOT = fileURLToPath(new URL('.', import.meta.url));
+const PUBLIC = join(ROOT, 'public');
+const LEGACY_STATE_FILE = join(ROOT, 'data', 'state.json'); // from before the feed moved into the browser
 const PORT = Number(process.env.PORT ?? 4321);
-const HOST = '127.0.0.1'; // local only: the server acts with your GitHub token
-const STATE_FILE = join(ROOT, 'data', 'state.json');
-const STAR_LIMIT = Number(process.env.STAR_LIMIT ?? 1000);
-const REFRESH_EVERY_MS = Number(process.env.REFRESH_HOURS ?? 6) * 3_600_000;
-const FEED_SIZE = 150;
-const FORK_MIN_STARS = Number(process.env.FORK_MIN_STARS ?? 200); // forks below this are hidden
+const HOST = '127.0.0.1'; // local only: the proxy acts with your GitHub token
+const API = 'https://api.github.com';
 
-const client = createClient(getToken());
-const state = await loadState(STATE_FILE);
-let refreshing = null;
-
-async function doRefresh() {
-  const started = Date.now();
-  console.log('refresh: loading stars…');
-  const viewer = await client.viewer();
-  const stars = await client.starred(STAR_LIMIT);
-  const profile = buildProfile(stars, started);
-  console.log(`refresh: ${stars.length} stars → ${profile.topics.length} topics; searching…`);
-
-  const starredNames = new Set(stars.map((s) => s.repo.full_name.toLowerCase()));
-  const starredLite = stars
-    .filter((s) => s.repo.topics?.length)
-    .map((s) => ({ name: s.repo.full_name, topics: s.repo.topics }));
-  const score = createScorer(profile);
-
-  const feed = dropCloneClusters(await fetchCandidates(client, profile))
-    .filter(({ repo }) => isEligible(repo, viewer.login, FORK_MIN_STARS))
-    .filter(({ repo }) => !starredNames.has(repo.full_name.toLowerCase()))
-    .map(({ repo, sources }) => ({ ...slimRepo(repo), sources, ...score(repo, started) }))
-    .sort((a, b) => b.score - a.score)
-    .slice(0, FEED_SIZE)
-    .map((item) => ({ ...item, similar: similarStarred(item.topics, starredLite) }));
-
-  Object.assign(state, {
-    viewer: { login: viewer.login, avatar: viewer.avatar_url, url: viewer.html_url },
-    profile,
-    feed,
-    lastRefresh: started,
-    lastError: null,
-  });
-  await saveState(STATE_FILE, state);
-  console.log(`refresh: done in ${((Date.now() - started) / 1000).toFixed(1)}s, ${feed.length} repos`);
-}
-
-function refresh() {
-  refreshing ??= doRefresh()
-    .catch(async (err) => {
-      console.error('refresh failed:', err.message);
-      state.lastError = err.message;
-      await saveState(STATE_FILE, state);
-    })
-    .finally(() => (refreshing = null));
-  return refreshing;
-}
-
-function feedPayload() {
-  return {
-    viewer: state.viewer,
-    profile: state.profile,
-    lastRefresh: state.lastRefresh,
-    lastError: state.lastError,
-    lastVisit: state.lastVisit,
-    refreshing: Boolean(refreshing),
-    items: state.feed.map((item) => ({
-      ...item,
-      dismissed: item.fullName in state.dismissed,
-    })),
-  };
-}
-
-async function readJson(req) {
-  let body = '';
-  for await (const chunk of req) {
-    body += chunk;
-    if (body.length > 10_000) throw Object.assign(new Error('Body too large'), { status: 413 });
-  }
-  return body ? JSON.parse(body) : {};
-}
-
-const api = {
-  'GET /api/feed': () => feedPayload(),
-  'POST /api/refresh': async () => {
-    await refresh();
-    return feedPayload();
-  },
-  'POST /api/visit': async () => {
-    state.lastVisit = Date.now();
-    await saveState(STATE_FILE, state);
-    return { ok: true };
-  },
-  'POST /api/dismiss': async ({ fullName, undo }) => {
-    assertRepoName(fullName);
-    if (undo) delete state.dismissed[fullName];
-    else state.dismissed[fullName] = Date.now();
-    await saveState(STATE_FILE, state);
-    return { ok: true };
-  },
-  'POST /api/star': async ({ fullName, undo }) => {
-    await (undo ? client.unstar(fullName) : client.star(fullName));
-    const item = state.feed.find((i) => i.fullName === fullName);
-    if (item) item.starred = !undo;
-    await saveState(STATE_FILE, state);
-    return { ok: true };
-  },
+const SETTINGS = {
+  starLimit: Number(process.env.STAR_LIMIT ?? 1000),
+  refreshHours: Number(process.env.REFRESH_HOURS ?? 6),
+  forkMinStars: Number(process.env.FORK_MIN_STARS ?? 200),
 };
 
-const STATIC = {
-  '/': ['index.html', 'text/html; charset=utf-8'],
-  '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
-  '/style.css': ['style.css', 'text/css; charset=utf-8'],
+function getToken() {
+  if (process.env.GITHUB_TOKEN) return process.env.GITHUB_TOKEN.trim();
+  try {
+    return execFileSync('gh', ['auth', 'token'], { encoding: 'utf8' }).trim();
+  } catch {
+    throw new Error('No GitHub token found. Set GITHUB_TOKEN or run `gh auth login`.');
+  }
+}
+const TOKEN = getToken();
+
+// Only what the app needs, so nothing else on this machine can borrow the token for other calls.
+const STAR_PATH = /^\/user\/starred\/[\w.-]+\/[\w.-]+$/;
+const PROXY_ROUTES = [
+  ['GET', /^\/user$/],
+  ['GET', /^\/user\/starred$/],
+  ['GET', /^\/search\/repositories$/],
+  ['PUT', STAR_PATH],
+  ['DELETE', STAR_PATH],
+];
+const ACCEPTS = new Set(['application/vnd.github+json', 'application/vnd.github.star+json']);
+const FORWARDED = ['content-type', 'link','x-ratelimit-limit', 'x-ratelimit-remaining', 'x-ratelimit-reset', 'x-ratelimit-resource'];
+
+const TYPES = {
+  '.html': 'text/html; charset=utf-8',
+  '.js': 'text/javascript; charset=utf-8',
+  '.css': 'text/css; charset=utf-8',
+  '.json': 'application/json; charset=utf-8',
+  '.svg': 'image/svg+xml',
+  '.png': 'image/png',
 };
 
 function send(res, status, body, type = 'application/json; charset=utf-8') {
@@ -126,33 +55,70 @@ function send(res, status, body, type = 'application/json; charset=utf-8') {
   res.end(type.startsWith('application/json') ? JSON.stringify(body) : body);
 }
 
+async function proxy(req, res, url) {
+  const path = url.pathname.slice('/gh'.length);
+  if (!PROXY_ROUTES.some(([method, re]) => method === req.method && re.test(path))) {
+    return send(res, 404, { message: 'Not proxied' });
+  }
+  // Block cross-site writes: only this page may star or unstar.
+  const origin = req.headers.origin;
+  if (req.method !== 'GET' && origin && origin !== `http://${req.headers.host}`) {
+    return send(res, 403, { message: 'Forbidden' });
+  }
+  const upstream = await fetch(API + path + url.search, {
+    method: req.method,
+    headers: {
+      Authorization: `Bearer ${TOKEN}`,
+      Accept: ACCEPTS.has(req.headers.accept) ? req.headers.accept : 'application/vnd.github+json',
+      'X-GitHub-Api-Version': '2022-11-28',
+      'User-Agent': 'better-github-explore',
+    },
+  });
+  const headers = { 'Cache-Control': 'no-store' };
+  for (const h of FORWARDED) {
+    const v = upstream.headers.get(h);
+    if (v) headers[h] = v;
+  }
+  res.writeHead(upstream.status, headers);
+  res.end(Buffer.from(await upstream.arrayBuffer()));
+}
+
+/** Tells the page it runs locally. Includes the old server-side state once, so nothing is lost. */
+async function localConfig() {
+  let legacy = null;
+  try {
+    legacy = JSON.parse(await readFile(LEGACY_STATE_FILE, 'utf8'));
+  } catch {
+    /* no old state */
+  }
+  return { local: true, settings: SETTINGS, legacy };
+}
+
+async function serveStatic(res, pathname) {
+  const file = normalize(join(PUBLIC, pathname === '/' ? 'index.html' : decodeURIComponent(pathname)));
+  const type = TYPES[extname(file)];
+  if (!file.startsWith(PUBLIC + '/') || !type) return send(res, 404, { message: 'Not found' });
+  try {
+    send(res, 200, await readFile(file), type);
+  } catch (err) {
+    if (err.code === 'ENOENT' || err.code === 'EISDIR') return send(res, 404, { message: 'Not found' });
+    throw err;
+  }
+}
+
 const server = http.createServer(async (req, res) => {
   // Reject anything not addressed to localhost (guards against DNS rebinding).
-  if (!/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(req.headers.host ?? '')) return send(res, 403, { error: 'Forbidden' });
-  const { pathname } = new URL(req.url, `http://${req.headers.host}`);
+  if (!/^(localhost|127\.0\.0\.1)(:\d+)?$/.test(req.headers.host ?? '')) return send(res, 403, { message: 'Forbidden' });
+  const url = new URL(req.url, `http://${req.headers.host}`);
   try {
-    const handler = api[`${req.method} ${pathname}`];
-    if (handler) {
-      if (req.method !== 'GET') {
-        // Block cross-site requests: only same-origin JSON posts may star or dismiss.
-        const origin = req.headers.origin;
-        if ((origin && origin !== `http://${req.headers.host}`) || !req.headers['content-type']?.includes('json')) {
-          return send(res, 403, { error: 'Forbidden' });
-        }
-      }
-      return send(res, 200, await handler(req.method === 'GET' ? {} : await readJson(req)));
-    }
-    const asset = req.method === 'GET' && STATIC[pathname];
-    if (asset) return send(res, 200, await readFile(join(ROOT, 'public', asset[0])), asset[1]);
-    send(res, 404, { error: 'Not found' });
+    if (url.pathname.startsWith('/gh/')) return await proxy(req, res, url);
+    if (req.method !== 'GET') return send(res, 405, { message: 'Method not allowed' });
+    if (url.pathname === '/local.json') return send(res, 200, await localConfig());
+    await serveStatic(res, url.pathname);
   } catch (err) {
-    send(res, err.status && err.status < 500 ? err.status : 500, { error: err.message });
+    console.error(err);
+    if (!res.headersSent) send(res, 502, { message: err.message });
   }
 });
 
-server.listen(PORT, HOST, () => {
-  console.log(`Better GitHub Explore → http://localhost:${PORT}`);
-  const stale = () => !state.lastRefresh || Date.now() - state.lastRefresh > REFRESH_EVERY_MS;
-  if (stale()) refresh();
-  setInterval(() => stale() && refresh(), 15 * 60_000).unref();
-});
+server.listen(PORT, HOST, () => console.log(`Better GitHub Explore → http://localhost:${PORT}`));

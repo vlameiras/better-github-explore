@@ -4,7 +4,8 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>Better Explore</title>
-    <link rel="stylesheet" href="/style.css" />
+    <meta name="description" content="A GitHub discovery feed ranked by what you've starred." />
+    <link rel="stylesheet" href="style.css" />
   </head>
   <body>
     <header class="top">
@@ -17,13 +18,45 @@
           </div>
         </div>
         <div class="top-actions">
-          <button class="btn" id="refresh">Refresh</button>
+          <button class="btn" id="refresh" hidden>Refresh</button>
+          <button class="btn ghost" id="switch" hidden title="Use a different GitHub account"></button>
           <a class="me" id="me" hidden></a>
         </div>
       </div>
     </header>
 
-    <div class="wrap layout">
+    <section class="wrap setup" id="setup" hidden>
+      <form class="setup-card" id="setup-form" novalidate>
+        <h2>Whose stars should this learn from?</h2>
+        <p>
+          Enter a GitHub username. Better Explore reads that account’s public stars, works out what it likes, and finds
+          fresh repos to match.
+        </p>
+        <div class="setup-row">
+          <label class="handle-field">
+            <span aria-hidden="true">@</span>
+            <input
+              id="handle"
+              name="handle"
+              autocomplete="username"
+              autocapitalize="none"
+              spellcheck="false"
+              placeholder="octocat"
+              aria-label="GitHub username"
+            />
+          </label>
+          <button class="btn" type="submit" id="setup-go">Build my feed</button>
+        </div>
+        <p class="setup-error" id="setup-error" role="alert" hidden></p>
+        <p class="setup-note">
+          Runs in your browser and is saved there. Only GitHub’s public API is contacted. Without signing in, GitHub
+          allows 10 searches a minute, so the first feed takes a couple of minutes.
+        </p>
+        <button type="button" class="link" id="setup-cancel" hidden>Cancel</button>
+      </form>
+    </section>
+
+    <div class="wrap layout" id="app" hidden>
       <aside class="taste" id="taste" aria-label="Your taste profile"></aside>
 
       <main>
@@ -51,6 +84,6 @@
     </div>
 
     <div class="toast" id="toast" role="status" hidden></div>
-    <script type="module" src="/app.js"></script>
+    <script type="module" src="app.js"></script>
   </body>
 </html>

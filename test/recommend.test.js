@@ -1,7 +1,7 @@
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { buildProfile, DAY, keywordsOf } from '../src/profile.js';
-import { buildQueries, createScorer, dropCloneClusters, isEligible, similarStarred } from '../src/recommend.js';
+import { buildProfile, DAY, keywordsOf } from '../public/lib/profile.js';
+import { buildQueries, createScorer, dropCloneClusters, isEligible, similarStarred } from '../public/lib/recommend.js';
 
 const now = Date.parse('2026-11-01T00:00:00Z');
 const star = (daysAgo, repo) => ({ starredAt: new Date(now - daysAgo * DAY).toISOString(), repo });

@@ -24,21 +24,37 @@ export function buildQueries(profile, now = Date.now()) {
   ];
 }
 
-export async function fetchCandidates(client, profile, { log = console.log, delayMs = 800 } = {}) {
+/**
+ * Runs every query and merges the results. `onProgress(candidates, done, total)` fires after each
+ * query so a caller can show picks while the rest are still loading. Searches run one at a time:
+ * parallel searches trip GitHub's secondary rate limit. The client waits out the primary one.
+ */
+export async function fetchCandidates(client, profile, { log = console.log, delayMs = 800, concurrency = 1, onProgress } = {}) {
   const byName = new Map();
-  for (const { q, source } of buildQueries(profile)) {
-    try {
-      for (const repo of await client.search(q)) {
-        const hit = byName.get(repo.full_name);
-        if (hit) hit.sources.push(source);
-        else byName.set(repo.full_name, { repo, sources: [source] });
+  const queries = buildQueries(profile);
+  let next = 0;
+  let done = 0;
+  let stopped = false;
+
+  async function worker() {
+    while (!stopped && next < queries.length) {
+      const { q, source } = queries[next++];
+      try {
+        for (const repo of await client.search(q)) {
+          const hit = byName.get(repo.full_name);
+          if (hit) hit.sources.push(source);
+          else byName.set(repo.full_name, { repo, sources: [source] });
+        }
+      } catch (err) {
+        log(`search failed (${source}): ${err.message}`);
+        if (err.status === 403 || err.status === 429) stopped = true; // rate limited; use what we have
       }
-    } catch (err) {
-      log(`search failed (${source}): ${err.message}`);
-      if (err.status === 403 || err.status === 429) break; // rate limited; use what we have
+      onProgress?.([...byName.values()], ++done, queries.length);
+      await sleep(delayMs);
     }
-    await sleep(delayMs); // search API allows 30 req/min
   }
+
+  await Promise.all(Array.from({ length: concurrency }, worker));
   return [...byName.values()];
 }
 

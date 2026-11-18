@@ -8,7 +8,7 @@ web
 
 ## Users
 
-One user: the owner, a developer who stars a lot of GitHub repositories. It is a personal tool, not built for other people to run or for a hosted audience. Anyone else only sees it through the README and its screenshot.
+One user: the owner, a developer who stars a lot of GitHub repositories. It is a personal tool. A hosted copy on GitHub Pages lets anyone enter a GitHub username and get the same feed for that account's public stars, but the owner's daily use is the design target.
 
 The job: find out, in a minute or two, whether anything worth starring has turned up in the areas they care about since they last looked.
 
@@ -25,7 +25,8 @@ The ranking comes from the owner's own star history, not from global popularity.
 ## Operating Context
 
 - **Daily skim.** The owner opens the tab about once a day, checks **New** (created in the last 48 hours), opens or stars a few repos, dismisses the rest, and leaves. **This week** (last 7 days), topic and language facets, text filter and sort are secondary.
-- The server runs locally (`npm start`, `localhost:4321`) and refreshes on its own every 6 hours. Coming back to the tab picks up a background refresh. A manual Refresh is available.
+- Two modes, one static page in `public/`. Hosted (GitHub Pages): the visitor enters a handle and the browser calls GitHub's public API with no token, so a refresh takes a couple of minutes and starring links out to GitHub. Local (`npm start`, `localhost:4321`): the server proxies GitHub with the owner's token, so private stars and starring work and a refresh takes under a minute.
+- The feed refreshes in the browser when the page is opened or shown and is older than 6 hours. A manual Refresh is available. Picks appear while the first refresh is still running.
 - Authentication uses the GitHub CLI login (`gh auth login`) or `GITHUB_TOKEN`. Starring from the feed writes a real star to the owner's GitHub account.
 
 ## Capabilities and Constraints
@@ -35,8 +36,8 @@ The ranking comes from the owner's own star history, not from global popularity.
 - Each card shows the owner avatar, name, New and Fork badges, a match percentage, the description, the "Because …" reasons, up to 8 topic chips (matched topics highlighted), stars, stars per day, language and repo age.
 - Actions: Star or unstar (writes to GitHub), "Not interested" / Restore, both with undo in a toast. Topic chips and the taste-profile bars work as one-at-a-time facet filters.
 - A taste-profile sidebar shows the learned topics (top 14) and languages (top 6) as weighted bars.
-- State (dismissed repos, the time of the last visit) lives in `data/state.json`. Localhost only, single user, no accounts.
-- Stack: Node 20+ with no runtime dependencies, plain `http` server, vanilla HTML/CSS/JS in `public/`, no build step. Tests use `node --test`.
+- State (feed, dismissed repos, the time of the last visit) lives in the browser's `localStorage`, one entry per account. No accounts or backend storage.
+- Stack: vanilla HTML/CSS/JS in `public/` (ES modules, no build step), deployable as a static site. Node 20+ with no runtime dependencies for the local proxy server. Tests use `node --test`.
 - Settings are environment variables: `PORT`, `STAR_LIMIT`, `REFRESH_HOURS`, `FORK_MIN_STARS`.
 
 ## Brand Commitments

@@ -1,11 +1,25 @@
+import { createClient } from './lib/github.js';
+import { buildFeed } from './lib/feed.js';
+import { createStore, parseHandle } from './lib/store.js';
+
 const $ = (sel) => document.querySelector(sel);
 const DAY = 86_400_000;
 
 const NEW_VISIT_GAP = 30 * 60_000; // hidden longer than this → coming back is a new visit
+const DEFAULTS = { starLimit: 1000, refreshHours: 6, forkMinStars: 200 };
 
 const ui = { view: 'new', sort: 'score', q: '', facet: null }; // facet: { kind: 'topic'|'lang', value }
-let data = null;
-let pollTimer = null;
+const store = createStore();
+
+// Two modes, one page. Local (`npm start`): GitHub calls go through the server's token proxy, so
+// private stars and starring work. Hosted (GitHub Pages): public data for a handle you enter.
+let mode = { local: false, settings: DEFAULTS };
+let client;
+let account; // storage key: 'local', or 'user:<login>'
+let state; // persisted per account
+let run = null; // while refreshing: { done, total, feed, waitUntil }
+let data = null; // what render() draws, derived from state and run
+let waitTicker = null;
 
 // When the previous visit ended: null = first ever visit, undefined = not resolved yet.
 // Held for the whole visit so the "seen" divider doesn't jump when you tab away to open a repo.
@@ -26,7 +40,7 @@ function resolveBaseline() {
     baseline = saved === 'none' ? null : Number(saved);
     return;
   }
-  baseline = data.lastVisit ?? null;
+  baseline = state.lastVisit ?? null;
   session.set('baseline', baseline ?? 'none');
 }
 
@@ -44,15 +58,21 @@ function ago(ts) {
   return `${Math.round(d / 30)}mo ago`;
 }
 
-async function api(path, body) {
-  const res = await fetch(path, body === undefined ? {} : {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(body),
-  });
-  const json = await res.json();
-  if (!res.ok) throw new Error(json.error ?? res.statusText);
-  return json;
+function save() {
+  store.save(account, state);
+}
+
+const slimViewer = (u) => ({ login: u.login, avatar: u.avatar_url, url: u.html_url });
+
+function describe(err) {
+  if (err.resetAt) {
+    const at = new Date(err.resetAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    return mode.local
+      ? `GitHub rate limit reached, try again after ${at}`
+      : `GitHub's limit for requests without signing in is used up until ${at}`;
+  }
+  if (err instanceof TypeError) return "Can't reach GitHub";
+  return err.message;
 }
 
 const isNew = (item) => Date.now() - Date.parse(item.createdAt) < 2 * DAY; // created in the last 48h
@@ -137,7 +157,11 @@ function card(item) {
       ${item.language ? `<span class="stat">${esc(item.language)}</span>` : ''}
       <span class="stat muted">created ${ago(item.createdAt)}</span>
       <span class="spacer"></span>
-      <button class="btn small${item.starred ? ' starred' : ''}" data-act="star">${item.starred ? '★ Starred' : '☆ Star'}</button>
+      ${
+        mode.local
+          ? `<button class="btn small${item.starred ? ' starred' : ''}" data-act="star">${item.starred ? '★ Starred' : '☆ Star'}</button>`
+          : `<a class="btn small" href="${esc(item.url)}" target="_blank" rel="noopener" title="Starring needs you signed in on GitHub">☆ Star on GitHub</a>`
+      }
       <button class="btn small ghost" data-act="dismiss">${item.dismissed ? 'Restore' : 'Not interested'}</button>
     </div>
   </li>`;
@@ -158,26 +182,60 @@ function renderTaste() {
       .join('')}</ul></section>`;
   };
   $('#taste').innerHTML = `
-    <p class="taste-intro">Learned from your <b>${p.starCount.toLocaleString()}</b> most recent stars. Recent stars count more.</p>
+    <p class="taste-intro">${
+      p.starCount
+        ? `Learned from ${whose()} <b>${p.starCount.toLocaleString()}</b> most recent stars. Recent stars count more.`
+        : `${mode.local ? 'You have' : `<b>@${esc(data.viewer?.login)}</b> has`} no public stars yet, so this shows what’s trending.`
+    }</p>
     ${block('Topics', p.topics.slice(0, 14), 'topic')}
     ${block('Languages', p.languages.slice(0, 6), 'lang')}`;
 }
 
-function render() {
-  if (!data) return;
-  const { viewer, lastRefresh, refreshing, lastError } = data;
 
+const whose = () => (mode.local || !data.viewer ? 'your' : `<b>@${esc(data.viewer.login)}</b>’s`);
+
+// The current feed for drawing. During the very first refresh, partial picks show as they arrive;
+// later refreshes keep the previous feed on screen until the new one is complete.
+function snapshot() {
+  const showPartial = run?.feed && !state.feed.length;
+  const feed = showPartial ? run.feed : state.feed;
+  return {
+    viewer: state.viewer,
+    profile: (showPartial && run.profile) || state.profile,
+    lastRefresh: state.lastRefresh,
+    lastError: state.lastError,
+    refreshing: Boolean(run),
+    items: feed.map((item) => ({ ...item, dismissed: item.fullName in state.dismissed })),
+  };
+}
+
+function renderStatus() {
+  const { lastRefresh, refreshing, lastError } = data;
   const live = data.items.filter((i) => !i.dismissed);
   const newCount = live.filter(isNew).length;
+  const wait = run?.waitUntil ? Math.max(0, Math.ceil((run.waitUntil - Date.now()) / 1000)) : 0;
 
   $('#status').textContent = refreshing
-    ? 'Refreshing… scanning GitHub for repos you might like'
+    ? wait
+      ? `Waiting for GitHub’s search limit · resuming in ${wait}s`
+      : run.total
+        ? `Scanning GitHub · ${run.done} of ${run.total} searches`
+        : 'Reading stars…'
     : lastError
       ? `Last refresh failed: ${lastError}`
       : lastRefresh
         ? `${ui.view === 'all' ? `${live.length} picks · ` : ''}${newCount ? `${newCount} new` : 'Nothing new'} · updated ${ago(lastRefresh)}`
         : 'Not refreshed yet';
   $('#status').classList.toggle('error', Boolean(lastError) && !refreshing);
+}
+
+function render() {
+  if (!state) return;
+  data = snapshot();
+  const { viewer, refreshing } = data;
+
+  const newCount = data.items.filter((i) => !i.dismissed && isNew(i)).length;
+  renderStatus();
   $('#refresh').disabled = refreshing;
   $('#refresh').textContent = refreshing ? 'Refreshing…' : 'Refresh';
 
@@ -186,6 +244,7 @@ function render() {
     me.hidden = false;
     me.href = viewer.url;
     me.innerHTML = `<img src="${esc(viewer.avatar)}&s=64" alt="${esc(viewer.login)}" width="28" height="28" />`;
+    if (!mode.local) $('#switch').textContent = `@${viewer.login}`;
   }
 
   $('#new-count').textContent = newCount || '';
@@ -208,27 +267,58 @@ function render() {
   const empty = $('#empty');
   empty.hidden = items.length > 0;
   empty.textContent = !data.lastRefresh
-    ? 'Building your first feed. This takes about 20 seconds.'
+    ? refreshing
+      ? mode.local
+        ? 'Building your first feed. This takes under a minute.'
+        : 'Building the first feed. Without signing in, GitHub allows 10 searches a minute, so this takes a couple of minutes. Picks appear here as they’re found.'
+      : 'No feed yet. Press Refresh to build one.'
     : ui.view === 'new'
       ? 'Nothing created in the last 48 hours matches your taste yet. Check back after the next refresh.'
       : ui.view === 'dismissed'
         ? 'Nothing dismissed.'
         : 'No repos match these filters.';
-
-  clearTimeout(pollTimer);
-  if (refreshing) pollTimer = setTimeout(load, 3000);
 }
 
-async function load() {
+function onWait(until) {
+  if (!run) return;
+  run.waitUntil = until;
+  clearInterval(waitTicker);
+  if (until) waitTicker = setInterval(() => (run?.waitUntil ? renderStatus() : clearInterval(waitTicker)), 1000);
+  renderStatus();
+}
+
+async function refresh() {
+  if (run) return;
+  run = { done: 0, total: 0, feed: null, profile: null, waitUntil: 0 };
+  render();
   try {
-    data = await api('/api/feed');
-    resolveBaseline();
-    render();
+    // Hosted mode already looked the user up when the handle was entered; that saves a request.
+    const viewer = mode.local || !state.viewer ? slimViewer(await (mode.local ? client.viewer() : client.user(store.handle()))) : state.viewer;
+    const now = Date.now();
+    const { profile, feed } = await buildFeed(client, {
+      viewerLogin: viewer.login,
+      starsOf: mode.local ? null : viewer.login,
+      starLimit: mode.settings.starLimit,
+      forkMinStars: mode.settings.forkMinStars,
+      now,
+      onProgress: (p) => {
+        Object.assign(run, p);
+        render();
+      },
+    });
+    Object.assign(state, { viewer, profile, feed, lastRefresh: now, lastError: null });
   } catch (err) {
-    $('#status').textContent = `Can't reach the server: ${err.message}`;
-    $('#status').classList.add('error');
+    console.error('refresh failed:', err);
+    state.lastError = describe(err);
+  } finally {
+    run = null;
+    clearInterval(waitTicker);
+    save();
+    render();
   }
 }
+
+const isStale = () => !state.lastRefresh || Date.now() - state.lastRefresh > mode.settings.refreshHours * 3_600_000;
 
 let toastTimer;
 function toast(html, onUndo) {
@@ -240,34 +330,32 @@ function toast(html, onUndo) {
   toastTimer = setTimeout(() => (t.hidden = true), 5000);
 }
 
-async function setDismissed(item, dismissed) {
-  item.dismissed = dismissed;
+function setDismissed(item, dismissed) {
+  if (dismissed) state.dismissed[item.fullName] = Date.now();
+  else delete state.dismissed[item.fullName];
+  save();
   render();
-  try {
-    await api('/api/dismiss', { fullName: item.fullName, undo: !dismissed });
-  } catch (err) {
-    item.dismissed = !dismissed;
-    render();
-    toast(`Couldn't update: ${esc(err.message)}`);
-  }
 }
 
 async function setStarred(item, starred) {
-  item.starred = starred;
+  const stored = state.feed.find((i) => i.fullName === item.fullName);
+  if (!stored) return;
+  stored.starred = starred;
   render();
   try {
-    await api('/api/star', { fullName: item.fullName, undo: !starred });
+    await (starred ? client.star(item.fullName) : client.unstar(item.fullName));
+    save();
     if (starred) toast(`Starred <b>${esc(item.fullName)}</b>`, () => setStarred(item, false));
   } catch (err) {
-    item.starred = !starred;
+    stored.starred = !starred;
     render();
-    toast(`Couldn't star: ${esc(err.message)}`);
+    toast(`Couldn't star: ${esc(describe(err))}`);
   }
 }
 
 document.addEventListener('click', (e) => {
   const el = e.target.closest('button');
-  if (!el) return;
+  if (!el || !data) return;
 
   if (el.dataset.view) {
     ui.view = el.dataset.view;
@@ -295,16 +383,7 @@ document.addEventListener('click', (e) => {
   }
 });
 
-$('#refresh').onclick = async () => {
-  data.refreshing = true;
-  render();
-  try {
-    data = await api('/api/refresh', {});
-  } catch (err) {
-    toast(`Refresh failed: ${esc(err.message)}`);
-  }
-  render();
-};
+$('#refresh').onclick = () => refresh();
 
 $('#q').oninput = (e) => {
   ui.q = e.target.value;
@@ -316,19 +395,119 @@ $('#sort').onchange = (e) => {
 };
 
 // Leaving the page stamps the visit. Coming back after a long gap starts a new one; a short
-// trip to another tab (opening a repo) keeps the same divider. Also picks up background refreshes.
+// trip to another tab (opening a repo) keeps the same divider. Also refreshes a stale feed.
 document.addEventListener('visibilitychange', () => {
+  if (!state) return;
   if (document.visibilityState === 'hidden') {
     hiddenAt = Date.now();
     session.set('hiddenAt', String(hiddenAt));
-    navigator.sendBeacon?.('/api/visit', new Blob(['{}'], { type: 'application/json' }));
+    state.lastVisit = hiddenAt;
+    save();
     return;
   }
   if (hiddenAt && Date.now() - hiddenAt > NEW_VISIT_GAP) {
     baseline = undefined;
     session.del('baseline');
+    resolveBaseline();
   }
-  load();
+  if (isStale()) refresh();
+  else render();
 });
 
-load();
+// --- Choosing whose stars to learn from (hosted mode) ---
+
+function showSetup({ error, canCancel = false } = {}) {
+  $('#setup').hidden = false;
+  $('#app').hidden = true;
+  $('#refresh').hidden = true;
+  $('#switch').hidden = true;
+  $('#setup-cancel').hidden = !canCancel;
+  $('#status').textContent = 'Discovery ranked by GitHub stars';
+  $('#status').classList.remove('error');
+  const err = $('#setup-error');
+  err.hidden = !error;
+  err.textContent = error ?? '';
+  const input = $('#handle');
+  input.value = store.handle() ?? '';
+  input.focus();
+}
+
+function showApp() {
+  $('#setup').hidden = true;
+  $('#app').hidden = false;
+  $('#refresh').hidden = false;
+  $('#switch').hidden = mode.local;
+}
+
+$('#switch').onclick = () => showSetup({ canCancel: true });
+$('#setup-cancel').onclick = () => {
+  showApp();
+  render();
+};
+
+$('#setup-form').onsubmit = async (e) => {
+  e.preventDefault();
+  const fail = (msg) => {
+    $('#setup-error').hidden = false;
+    $('#setup-error').textContent = msg;
+    $('#setup-go').disabled = false;
+  };
+  const handle = parseHandle($('#handle').value);
+  if (!handle) return fail('That doesn’t look like a GitHub username.');
+  $('#setup-go').disabled = true;
+  try {
+    const user = await client.user(handle);
+    if (user.type === 'Organization') return fail(`@${user.login} is an organization. Organizations can’t star repos; try a person’s account.`);
+    const key = `user:${user.login.toLowerCase()}`;
+    const saved = store.load(key);
+    saved.viewer = slimViewer(user);
+    store.save(key, saved);
+    store.setHandle(user.login);
+    // Reload so any refresh still running for the previous account stops cleanly.
+    location.reload();
+  } catch (err) {
+    fail(err.status === 404 ? `There’s no GitHub user called @${handle}.` : describe(err));
+  }
+};
+
+// --- Start ---
+
+async function detectMode() {
+  try {
+    const res = await fetch('local.json', { cache: 'no-store' });
+    if (res.ok) return await res.json(); // only the local server answers this
+  } catch {
+    /* static hosting */
+  }
+  return { local: false };
+}
+
+function openAccount(key) {
+  account = key;
+  state = store.load(account);
+  resolveBaseline();
+  showApp();
+  render();
+  if (isStale()) refresh();
+}
+
+async function boot() {
+  const found = await detectMode();
+  mode = { ...found, settings: { ...DEFAULTS, ...found.settings } };
+  client = createClient(mode.local ? { base: 'gh', onWait } : { onWait });
+
+  if (mode.local) {
+    // One-time carry-over from when the server kept the feed in data/state.json.
+    if (!store.has('local') && found.legacy) {
+      const { feed, profile, viewer, dismissed, lastRefresh, lastVisit } = found.legacy;
+      store.save('local', { feed, profile, viewer, dismissed, lastRefresh, lastVisit });
+    }
+    return openAccount('local');
+  }
+
+  const handle = store.handle();
+  if (!handle) return showSetup();
+  openAccount(`user:${handle.toLowerCase()}`);
+}
+
+boot();

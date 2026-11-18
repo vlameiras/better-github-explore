@@ -35,6 +35,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 
 body {
   margin: 0;
@@ -85,7 +86,50 @@ h1 { margin: 0; font-size: 17px; letter-spacing: -0.01em; }
 .btn.ghost:hover { color: var(--ink); border-color: var(--ink-3); opacity: 1; }
 .btn.small { padding: 4px 11px; font-size: 12.5px; }
 .btn.starred { background: var(--accent); border-color: var(--accent); color: #fff; }
+a.btn { display: inline-block; text-decoration: none; }
 .link { background: none; border: 0; padding: 0; color: var(--accent); font-weight: 600; cursor: pointer; }
+
+/* Choosing whose stars to learn from (hosted mode) */
+.setup { padding-block: 72px 64px; }
+.setup-card {
+  max-width: 520px;
+  margin: 0 auto;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 28px 28px 24px;
+}
+.setup-card h2 { margin: 0 0 8px; font-size: 20px; letter-spacing: -0.01em; }
+.setup-card p { margin: 0; color: var(--ink-2); }
+.setup-row { display: flex; gap: 8px; margin-top: 20px; }
+.handle-field {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  border: 1px solid var(--line);
+  background: var(--bg);
+  border-radius: 999px;
+  padding: 0 14px;
+}
+.handle-field:focus-within { border-color: var(--accent); outline: 2px solid var(--accent-soft); }
+.handle-field span { font-family: var(--mono); color: var(--ink-3); }
+.handle-field input {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-family: var(--mono);
+  font-size: 14px;
+  padding: 8px 2px;
+}
+.setup-row .btn { padding-inline: 18px; }
+.setup-card .setup-error { margin-top: 10px; color: var(--accent); font-size: 13px; font-weight: 600; }
+.setup-card .setup-note { margin-top: 16px; font-size: 13px; color: var(--ink-3); }
+#setup-cancel { margin-top: 14px; font-size: 13px; }
 
 /* Layout */
 .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 32px; padding-block: 24px 64px; }
@@ -269,4 +313,7 @@ input[type='search'] { width: 180px; }
   .controls-right { width: 100%; }
   input[type='search'] { flex: 1; width: auto; }
   .seg { max-width: 100%; overflow-x: auto; }
+  .setup { padding-block: 32px 48px; }
+  .setup-card { padding: 22px 18px 20px; }
+  .setup-row { flex-direction: column; }
 }
