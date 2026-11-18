@@ -50,7 +50,8 @@
         <p class="setup-error" id="setup-error" role="alert" hidden></p>
         <p class="setup-note">
           Runs in your browser and is saved there. Only GitHub’s public API is contacted. Without signing in, GitHub
-          allows 10 searches a minute, so the first feed takes a couple of minutes.
+          allows 10 searches a minute, so the first feed takes a couple of minutes. For faster refreshes,
+          <a href="https://github.com/vlameiras/explore#local-your-own-token" target="_blank" rel="noopener">run it locally</a>.
         </p>
         <button type="button" class="link" id="setup-cancel" hidden>Cancel</button>
       </form>
@@ -76,12 +77,25 @@
             </select>
           </div>
         </div>
+        <p class="notice" id="slow-notice" role="status" hidden>
+          Scanning can take a couple of minutes here: GitHub allows only 10 searches a minute without signing in.
+          For faster refreshes,
+          <a href="https://github.com/vlameiras/explore#local-your-own-token" target="_blank" rel="noopener">run it locally</a>.
+        </p>
         <div class="active-filter" id="active-filter" hidden></div>
         <ol class="feed" id="feed"></ol>
         <p class="end" id="end" hidden>That’s everything from the last 48 hours.</p>
         <p class="empty" id="empty" hidden></p>
       </main>
     </div>
+
+    <footer class="foot">
+      <div class="wrap foot-inner">
+        <span>Made by <a href="https://github.com/vlameiras" target="_blank" rel="noopener">@vlameiras</a></span>
+        <span aria-hidden="true">·</span>
+        <a href="https://github.com/vlameiras/explore" target="_blank" rel="noopener">Source on GitHub</a>
+      </div>
+    </footer>
 
     <div class="toast" id="toast" role="status" hidden></div>
     <script type="module" src="app.js"></script>

@@ -236,6 +236,7 @@ function render() {
 
   const newCount = data.items.filter((i) => !i.dismissed && isNew(i)).length;
   renderStatus();
+  $('#slow-notice').hidden = !(refreshing && !mode.local);
   $('#refresh').disabled = refreshing;
   $('#refresh').textContent = refreshing ? 'Refreshing…' : 'Refresh';
 
@@ -270,7 +271,7 @@ function render() {
     ? refreshing
       ? mode.local
         ? 'Building your first feed. This takes under a minute.'
-        : 'Building the first feed. Without signing in, GitHub allows 10 searches a minute, so this takes a couple of minutes. Picks appear here as they’re found.'
+        : 'Building the first feed. Picks appear here as they’re found.'
       : 'No feed yet. Press Refresh to build one.'
     : ui.view === 'new'
       ? 'Nothing created in the last 48 hours matches your taste yet. Check back after the next refresh.'
