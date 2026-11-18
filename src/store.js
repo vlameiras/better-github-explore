@@ -8,6 +8,7 @@ const EMPTY = {
   dismissed: {}, // fullName → ms timestamp
   lastRefresh: null,
   lastError: null,
+  lastVisit: null, // ms timestamp of when the page was last left
 };
 
 export async function loadState(file) {

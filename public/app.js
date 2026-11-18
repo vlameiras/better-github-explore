@@ -1,9 +1,34 @@
 const $ = (sel) => document.querySelector(sel);
 const DAY = 86_400_000;
 
-const ui = { view: 'all', sort: 'score', q: '', facet: null }; // facet: { kind: 'topic'|'lang', value }
+const NEW_VISIT_GAP = 30 * 60_000; // hidden longer than this → coming back is a new visit
+
+const ui = { view: 'new', sort: 'score', q: '', facet: null }; // facet: { kind: 'topic'|'lang', value }
 let data = null;
 let pollTimer = null;
+
+// When the previous visit ended: null = first ever visit, undefined = not resolved yet.
+// Held for the whole visit so the "seen" divider doesn't jump when you tab away to open a repo.
+let baseline;
+let hiddenAt = 0;
+
+const session = {
+  get(k) { try { return sessionStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { sessionStorage.setItem(k, v); } catch { /* storage unavailable: fine */ } },
+  del(k) { try { sessionStorage.removeItem(k); } catch { /* ignore */ } },
+};
+
+function resolveBaseline() {
+  if (baseline !== undefined) return;
+  const saved = session.get('baseline');
+  const left = Number(session.get('hiddenAt'));
+  if (saved !== null && !(left && Date.now() - left > NEW_VISIT_GAP)) {
+    baseline = saved === 'none' ? null : Number(saved);
+    return;
+  }
+  baseline = data.lastVisit ?? null;
+  session.set('baseline', baseline ?? 'none');
+}
 
 const esc = (s) =>
   String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c]);
@@ -52,6 +77,17 @@ function visibleItems() {
   return items.sort(by);
 }
 
+// New view: picks that arrived since the last visit first, then a divider, then the ones already seen.
+function feedHtml(items) {
+  if (ui.view !== 'new' || baseline == null) return items.map(card).join('');
+  const arrived = items.filter((i) => Date.parse(i.createdAt) > baseline);
+  const seen = items.filter((i) => Date.parse(i.createdAt) <= baseline);
+  if (!seen.length) return arrived.map(card).join('');
+  const label = arrived.length ? 'Seen on your last visit' : 'Nothing new since your last visit';
+  const divider = `<li class="divider" role="separator"><span>${label} · ${ago(baseline)}</span></li>`;
+  return arrived.map(card).join('') + divider + seen.map(card).join('');
+}
+
 function reasons(item) {
   const out = [];
   if (item.matchedTopics.length) out.push(`you follow <b>${item.matchedTopics.map(esc).join(', ')}</b>`);
@@ -64,8 +100,21 @@ function reasons(item) {
   return out;
 }
 
-function card(item) {
+// Topics you follow first (they're the reason it's here), a few others for context, the rest as "+N".
+function topicChips(item) {
   const matched = new Set(item.matchedTopics);
+  const mine = item.topics.filter((t) => matched.has(t));
+  const others = item.topics.filter((t) => !matched.has(t));
+  const shown = [...mine, ...others.slice(0, 3)].slice(0, 6);
+  const hidden = item.topics.filter((t) => !shown.includes(t));
+  const chips = shown.map(
+    (t) => `<li><button class="chip${matched.has(t) ? ' on' : ''}" data-topic="${esc(t)}">${esc(t)}</button></li>`,
+  );
+  if (hidden.length) chips.push(`<li class="chip-more" title="${esc(hidden.join(', '))}">+${hidden.length}</li>`);
+  return chips.join('');
+}
+
+function card(item) {
   const why = reasons(item);
   const match = Math.round(item.relevance * 100);
   return `
@@ -75,18 +124,13 @@ function card(item) {
       <a class="name" href="${esc(item.url)}" target="_blank" rel="noopener">
         <span class="owner">${esc(item.owner)} /</span> ${esc(item.fullName.split('/')[1])}
       </a>
-      ${isNew(item) ? '<span class="badge-new">New</span>' : ''}
+      ${isNew(item) && ui.view !== 'new' ? '<span class="badge-new">New</span>' : ''}
       ${item.isFork ? '<span class="badge-fork" title="Popular fork">Fork</span>' : ''}
-      <span class="match" title="How well this fits your stars">
-        <span class="match-bar"><span style="width:${match}%"></span></span>${match}%
-      </span>
+      <span class="match" title="How well this fits your stars">${match}% match</span>
     </div>
     ${item.description ? `<p class="desc">${esc(item.description)}</p>` : ''}
     ${why.length ? `<p class="why">Because ${why.join(' · ')}</p>` : ''}
-    ${item.topics.length ? `<ul class="topics">${item.topics
-      .slice(0, 8)
-      .map((t) => `<li><button class="chip${matched.has(t) ? ' on' : ''}" data-topic="${esc(t)}">${esc(t)}</button></li>`)
-      .join('')}</ul>` : ''}
+    ${item.topics.length ? `<ul class="topics">${topicChips(item)}</ul>` : ''}
     <div class="card-foot">
       <span class="stat" title="Stars">★ ${compact(item.stars)}</span>
       <span class="stat hot" title="Stars per day since creation">↗ ${compact(item.starsPerDay)}/day</span>
@@ -123,12 +167,15 @@ function render() {
   if (!data) return;
   const { viewer, lastRefresh, refreshing, lastError } = data;
 
+  const live = data.items.filter((i) => !i.dismissed);
+  const newCount = live.filter(isNew).length;
+
   $('#status').textContent = refreshing
     ? 'Refreshing… scanning GitHub for repos you might like'
     : lastError
       ? `Last refresh failed: ${lastError}`
       : lastRefresh
-        ? `Updated ${ago(lastRefresh)} · ${data.items.filter((i) => !i.dismissed).length} picks`
+        ? `${ui.view === 'all' ? `${live.length} picks · ` : ''}${newCount ? `${newCount} new` : 'Nothing new'} · updated ${ago(lastRefresh)}`
         : 'Not refreshed yet';
   $('#status').classList.toggle('error', Boolean(lastError) && !refreshing);
   $('#refresh').disabled = refreshing;
@@ -141,7 +188,6 @@ function render() {
     me.innerHTML = `<img src="${esc(viewer.avatar)}&s=64" alt="${esc(viewer.login)}" width="28" height="28" />`;
   }
 
-  const newCount = data.items.filter((i) => !i.dismissed && isNew(i)).length;
   $('#new-count').textContent = newCount || '';
 
   for (const b of document.querySelectorAll('#views button')) {
@@ -157,7 +203,8 @@ function render() {
   renderTaste();
 
   const items = visibleItems();
-  $('#feed').innerHTML = items.map(card).join('');
+  $('#feed').innerHTML = feedHtml(items);
+  $('#end').hidden = !(ui.view === 'new' && items.length && !ui.q.trim() && !ui.facet);
   const empty = $('#empty');
   empty.hidden = items.length > 0;
   empty.textContent = !data.lastRefresh
@@ -175,6 +222,7 @@ function render() {
 async function load() {
   try {
     data = await api('/api/feed');
+    resolveBaseline();
     render();
   } catch (err) {
     $('#status').textContent = `Can't reach the server: ${err.message}`;
@@ -267,7 +315,20 @@ $('#sort').onchange = (e) => {
   render();
 };
 
-// Pick up background refreshes when you come back to the tab.
-document.addEventListener('visibilitychange', () => document.visibilityState === 'visible' && load());
+// Leaving the page stamps the visit. Coming back after a long gap starts a new one; a short
+// trip to another tab (opening a repo) keeps the same divider. Also picks up background refreshes.
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'hidden') {
+    hiddenAt = Date.now();
+    session.set('hiddenAt', String(hiddenAt));
+    navigator.sendBeacon?.('/api/visit', new Blob(['{}'], { type: 'application/json' }));
+    return;
+  }
+  if (hiddenAt && Date.now() - hiddenAt > NEW_VISIT_GAP) {
+    baseline = undefined;
+    session.del('baseline');
+  }
+  load();
+});
 
 load();

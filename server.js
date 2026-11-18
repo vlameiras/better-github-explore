@@ -70,6 +70,7 @@ function feedPayload() {
     profile: state.profile,
     lastRefresh: state.lastRefresh,
     lastError: state.lastError,
+    lastVisit: state.lastVisit,
     refreshing: Boolean(refreshing),
     items: state.feed.map((item) => ({
       ...item,
@@ -92,6 +93,11 @@ const api = {
   'POST /api/refresh': async () => {
     await refresh();
     return feedPayload();
+  },
+  'POST /api/visit': async () => {
+    state.lastVisit = Date.now();
+    await saveState(STATE_FILE, state);
+    return { ok: true };
   },
   'POST /api/dismiss': async ({ fullName, undo }) => {
     assertRepoName(fullName);

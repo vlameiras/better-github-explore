@@ -29,9 +29,9 @@
       <main>
         <div class="controls">
           <div class="seg" role="tablist" id="views">
-            <button role="tab" data-view="all" aria-selected="true">For you</button>
-            <button role="tab" data-view="new">New <span class="count" id="new-count"></span></button>
+            <button role="tab" data-view="new" aria-selected="true">New <span class="count" id="new-count"></span></button>
             <button role="tab" data-view="week">This week</button>
+            <button role="tab" data-view="all">All picks</button>
             <button role="tab" data-view="dismissed">Dismissed</button>
           </div>
           <div class="controls-right">
@@ -45,6 +45,7 @@
         </div>
         <div class="active-filter" id="active-filter" hidden></div>
         <ol class="feed" id="feed"></ol>
+        <p class="end" id="end" hidden>That’s everything from the last 48 hours.</p>
         <p class="empty" id="empty" hidden></p>
       </main>
     </div>

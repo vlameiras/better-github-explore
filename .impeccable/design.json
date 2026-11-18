@@ -1,0 +1,169 @@
+{
+  "schemaVersion": 2,
+  "generatedAt": "2026-11-18T00:00:00Z",
+  "title": "Design System: Better Explore",
+  "extensions": {
+    "colorMeta": {
+      "kiln-orange": { "role": "primary", "displayName": "Kiln Orange", "canonical": "#fb8a4c", "cssVar": "--accent", "tonalRamp": ["#3a1405", "#5c2109", "#7f2e0b", "#a83a0c", "#c2410c", "#e8662a", "#fb8a4c", "#fde0cc"] },
+      "kiln-orange-light-theme": { "role": "primary", "displayName": "Kiln Orange (light theme)", "canonical": "#c2410c", "cssVar": "--accent", "tonalRamp": ["#3a1405", "#5c2109", "#7f2e0b", "#a83a0c", "#c2410c", "#e8662a", "#fb8a4c", "#fde0cc"] },
+      "kiln-wash": { "role": "primary", "displayName": "Kiln Wash", "canonical": "#3a2216", "cssVar": "--accent-soft", "tonalRamp": ["#1f120b", "#2c1a10", "#3a2216", "#5a3420", "#8a5a3f", "#c99a7e", "#f3c9ae", "#fdeee4"] },
+      "kiln-wash-light-theme": { "role": "primary", "displayName": "Kiln Wash (light theme)", "canonical": "#fdeee4", "cssVar": "--accent-soft", "tonalRamp": ["#1f120b", "#2c1a10", "#3a2216", "#5a3420", "#8a5a3f", "#c99a7e", "#f3c9ae", "#fdeee4"] },
+      "kiln-bar-fill": { "role": "primary", "displayName": "Kiln Bar Fill", "canonical": "#5a3420", "cssVar": "--bar-fill", "tonalRamp": ["#1f120b", "#2c1a10", "#3a2216", "#5a3420", "#8a5a3f", "#c99a7e", "#f3c9ae", "#fdeee4"] },
+      "kiln-bar-fill-light-theme": { "role": "primary", "displayName": "Kiln Bar Fill (light theme)", "canonical": "#f3c9ae", "cssVar": "--bar-fill", "tonalRamp": ["#1f120b", "#2c1a10", "#3a2216", "#5a3420", "#8a5a3f", "#c99a7e", "#f3c9ae", "#fdeee4"] },
+      "momentum-green": { "role": "secondary", "displayName": "Momentum Green", "canonical": "#4ade80", "cssVar": "--good", "tonalRamp": ["#0a2e17", "#0f4423", "#14592e", "#15803d", "#22a352", "#4ade80", "#93ecb4", "#dcfae6"] },
+      "momentum-green-light-theme": { "role": "secondary", "displayName": "Momentum Green (light theme)", "canonical": "#15803d", "cssVar": "--good", "tonalRamp": ["#0a2e17", "#0f4423", "#14592e", "#15803d", "#22a352", "#4ade80", "#93ecb4", "#dcfae6"] },
+      "page": { "role": "neutral", "displayName": "Page", "canonical": "#121211", "cssVar": "--bg", "tonalRamp": ["#121211", "#1b1b19", "#2c2b28", "#57544c", "#7d7a71", "#b3b0a6", "#e4e1d8", "#f6f5f1"] },
+      "page-light-theme": { "role": "neutral", "displayName": "Page (light theme)", "canonical": "#f6f5f1", "cssVar": "--bg", "tonalRamp": ["#121211", "#1b1b19", "#2c2b28", "#57544c", "#7d7a71", "#b3b0a6", "#e4e1d8", "#f6f5f1"] },
+      "surface": { "role": "neutral", "displayName": "Surface", "canonical": "#1b1b19", "cssVar": "--surface", "tonalRamp": ["#121211", "#1b1b19", "#2c2b28", "#57544c", "#7d7a71", "#b3b0a6", "#e4e1d8", "#f6f5f1"] },
+      "surface-light-theme": { "role": "neutral", "displayName": "Surface (light theme)", "canonical": "#ffffff", "cssVar": "--surface", "tonalRamp": ["#121211", "#1b1b19", "#2c2b28", "#57544c", "#7d7a71", "#b3b0a6", "#e4e1d8", "#f6f5f1"] },
+      "ink": { "role": "neutral", "displayName": "Ink", "canonical": "#ecebe6", "cssVar": "--ink", "tonalRamp": ["#121211", "#1b1b19", "#2c2b28", "#57544c", "#7d7a71", "#b3b0a6", "#e4e1d8", "#f6f5f1"] },
+      "ink-light-theme": { "role": "neutral", "displayName": "Ink (light theme)", "canonical": "#1d1c19", "cssVar": "--ink", "tonalRamp": ["#121211", "#1b1b19", "#2c2b28", "#57544c", "#7d7a71", "#b3b0a6", "#e4e1d8", "#f6f5f1"] },
+      "ink-soft": { "role": "neutral", "displayName": "Ink Soft", "canonical": "#b3b0a6", "cssVar": "--ink-2", "tonalRamp": ["#121211", "#1b1b19", "#2c2b28", "#57544c", "#7d7a71", "#b3b0a6", "#e4e1d8", "#f6f5f1"] },
+      "ink-soft-light-theme": { "role": "neutral", "displayName": "Ink Soft (light theme)", "canonical": "#57544c", "cssVar": "--ink-2", "tonalRamp": ["#121211", "#1b1b19", "#2c2b28", "#57544c", "#7d7a71", "#b3b0a6", "#e4e1d8", "#f6f5f1"] },
+      "ink-faint": { "role": "neutral", "displayName": "Ink Faint", "canonical": "#7d7a71", "cssVar": "--ink-3", "tonalRamp": ["#121211", "#1b1b19", "#2c2b28", "#57544c", "#7d7a71", "#b3b0a6", "#e4e1d8", "#f6f5f1"] },
+      "ink-faint-light-theme": { "role": "neutral", "displayName": "Ink Faint (light theme)", "canonical": "#8a867b", "cssVar": "--ink-3", "tonalRamp": ["#121211", "#1b1b19", "#2c2b28", "#57544c", "#7d7a71", "#b3b0a6", "#e4e1d8", "#f6f5f1"] },
+      "rule": { "role": "neutral", "displayName": "Rule", "canonical": "#2c2b28", "cssVar": "--line", "tonalRamp": ["#121211", "#1b1b19", "#2c2b28", "#57544c", "#7d7a71", "#b3b0a6", "#e4e1d8", "#f6f5f1"] },
+      "rule-light-theme": { "role": "neutral", "displayName": "Rule (light theme)", "canonical": "#e4e1d8", "cssVar": "--line", "tonalRamp": ["#121211", "#1b1b19", "#2c2b28", "#57544c", "#7d7a71", "#b3b0a6", "#e4e1d8", "#f6f5f1"] },
+      "chip": { "role": "neutral", "displayName": "Chip", "canonical": "#262522", "cssVar": "--chip", "tonalRamp": ["#121211", "#1b1b19", "#262522", "#2c2b28", "#57544c", "#b3b0a6", "#efede6", "#f6f5f1"] },
+      "chip-light-theme": { "role": "neutral", "displayName": "Chip (light theme)", "canonical": "#efede6", "cssVar": "--chip", "tonalRamp": ["#121211", "#1b1b19", "#262522", "#2c2b28", "#57544c", "#b3b0a6", "#efede6", "#f6f5f1"] },
+      "bar-track": { "role": "neutral", "displayName": "Bar Track", "canonical": "#24231f", "cssVar": "--bar", "tonalRamp": ["#121211", "#1b1b19", "#24231f", "#2c2b28", "#57544c", "#b3b0a6", "#e9e5d9", "#f6f5f1"] },
+      "bar-track-light-theme": { "role": "neutral", "displayName": "Bar Track (light theme)", "canonical": "#e9e5d9", "cssVar": "--bar", "tonalRamp": ["#121211", "#1b1b19", "#24231f", "#2c2b28", "#57544c", "#b3b0a6", "#e9e5d9", "#f6f5f1"] },
+      "on-kiln": { "role": "neutral", "displayName": "On Kiln", "canonical": "#ffffff", "tonalRamp": ["#121211", "#2c2b28", "#57544c", "#7d7a71", "#b3b0a6", "#e4e1d8", "#f6f5f1", "#ffffff"] }
+    },
+    "typographyMeta": {
+      "brand-title": { "displayName": "Brand Title", "purpose": "The app name in the header; the largest text in the system." },
+      "repo-title": { "displayName": "Repo Title", "purpose": "Repo name on each card; owner prefix at 400 in Ink Soft." },
+      "body": { "displayName": "Body", "purpose": "Repo descriptions and default text." },
+      "body-small": { "displayName": "Body Small", "purpose": "Reasons line, status, taste intro, toast, empty states." },
+      "control": { "displayName": "Control", "purpose": "Buttons and segmented tabs." },
+      "label": { "displayName": "Label", "purpose": "Uppercase sidebar section headings." },
+      "badge": { "displayName": "Badge", "purpose": "Uppercase New and Fork badges." },
+      "data": { "displayName": "Data", "purpose": "Mono stats, match %, taste-bar labels." },
+      "data-small": { "displayName": "Data Small", "purpose": "Mono topic chips." }
+    },
+    "shadows": [
+      { "name": "thumb-lift", "value": "0 1px 2px rgb(0 0 0 / 0.12)", "purpose": "Selected tab thumb inside the segmented control." },
+      { "name": "float", "value": "0 6px 24px rgb(0 0 0 / 0.2)", "purpose": "The toast, floating above the page." }
+    ],
+    "motion": [
+      { "name": "border-hover", "value": "border-color 0.15s ease", "purpose": "Card border darkening on hover; the only transition in the system." }
+    ],
+    "breakpoints": [
+      { "name": "single-column", "value": "860px" }
+    ],
+    "effects": [
+      { "name": "header-glass", "value": "background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px)", "purpose": "Sticky header separation over scrolling content." }
+    ]
+  },
+  "components": [
+    {
+      "name": "Primary Button",
+      "kind": "button",
+      "refersTo": "button-primary",
+      "description": "Ink-filled pill for the few primary actions (Refresh, Star).",
+      "html": "<button class=\"ds-btn\">Refresh</button>",
+      "css": ".ds-btn { border: 1px solid var(--ink); background: var(--ink); color: var(--bg); padding: 6px 14px; border-radius: 999px; font: 600 13px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; cursor: pointer; white-space: nowrap; } .ds-btn:hover { opacity: 0.88; } .ds-btn:disabled { opacity: 0.5; cursor: default; } .ds-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Ghost Button",
+      "kind": "button",
+      "refersTo": "button-ghost",
+      "description": "Bordered quiet pill for secondary actions (Not interested, Restore).",
+      "html": "<button class=\"ds-btn-ghost\">Not interested</button>",
+      "css": ".ds-btn-ghost { border: 1px solid var(--line); background: transparent; color: var(--ink-2); padding: 4px 11px; border-radius: 999px; font: 600 12.5px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; cursor: pointer; } .ds-btn-ghost:hover { color: var(--ink); border-color: var(--ink-3); } .ds-btn-ghost:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }"
+    },
+    {
+      "name": "Starred Button",
+      "kind": "button",
+      "refersTo": "button-starred",
+      "description": "Kiln Orange pill marking a repo you starred.",
+      "html": "<button class=\"ds-btn-starred\">★ Starred</button>",
+      "css": ".ds-btn-starred { border: 1px solid var(--accent); background: var(--accent); color: #fff; padding: 4px 11px; border-radius: 999px; font: 600 12.5px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; cursor: pointer; } .ds-btn-starred:hover { opacity: 0.88; } .ds-btn-starred:focus-visible { outline: 2px solid var(--ink); outline-offset: 2px; }"
+    },
+    {
+      "name": "Segmented View Switcher",
+      "kind": "nav",
+      "refersTo": "segmented-tab",
+      "description": "Pill track of views; the selected tab is a lifted Surface thumb, New carries a count.",
+      "html": "<div class=\"ds-seg\" role=\"tablist\"><button role=\"tab\" aria-selected=\"true\">For you</button><button role=\"tab\" aria-selected=\"false\">New <span class=\"ds-count\">28</span></button><button role=\"tab\" aria-selected=\"false\">This week</button><button role=\"tab\" aria-selected=\"false\">Dismissed</button></div>",
+      "css": ".ds-seg { display: inline-flex; background: var(--chip); border-radius: 999px; padding: 3px; } .ds-seg button { border: 0; background: transparent; padding: 5px 13px; border-radius: 999px; font: 600 13px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; color: var(--ink-2); cursor: pointer; } .ds-seg button:hover { color: var(--ink); } .ds-seg button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; } .ds-seg button[aria-selected='true'] { background: var(--surface); color: var(--ink); box-shadow: 0 1px 2px rgb(0 0 0 / 0.12); } .ds-count { display: inline-block; min-width: 18px; margin-left: 2px; padding: 0 5px; border-radius: 999px; background: var(--accent); color: #fff; font-size: 11px; line-height: 18px; text-align: center; }"
+    },
+    {
+      "name": "Filter Input",
+      "kind": "input",
+      "refersTo": "input-field",
+      "description": "Pill search field; the sort select shares the style.",
+      "html": "<input class=\"ds-input\" type=\"search\" placeholder=\"Filter…\" aria-label=\"Filter repositories\" />",
+      "css": ".ds-input { border: 1px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 13px; font: 400 13px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; width: 180px; } .ds-input::placeholder { color: var(--ink-3); } .ds-input:hover { border-color: var(--ink-3); } .ds-input:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }"
+    },
+    {
+      "name": "Topic Chips",
+      "kind": "chip",
+      "refersTo": "topic-chip",
+      "description": "Mono data tags that filter the feed; followed topics glow in Kiln.",
+      "html": "<ul class=\"ds-topics\"><li><button class=\"ds-chip\">agent-skills</button></li><li><button class=\"ds-chip ds-chip-on\">ai-agents</button></li><li><button class=\"ds-chip\">captions</button></li><li><button class=\"ds-chip ds-chip-on\">claude-code</button></li></ul>",
+      "css": ".ds-topics { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: 5px; } .ds-chip { border: 0; background: var(--chip); color: var(--ink-2); font: 400 11.5px/1.5 ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace; padding: 2px 8px; border-radius: 6px; cursor: pointer; } .ds-chip:hover { color: var(--ink); } .ds-chip:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; } .ds-chip-on { background: var(--accent-soft); color: var(--accent); font-weight: 600; } .ds-chip-on:hover { color: var(--accent); }"
+    },
+    {
+      "name": "Repo Card",
+      "kind": "card",
+      "refersTo": "card",
+      "description": "One ranked pick: name, match meter, description, reasons, chips, stats and actions.",
+      "html": "<article class=\"ds-card\"><div class=\"ds-card-head\"><span class=\"ds-avatar\"></span><a class=\"ds-name\" href=\"#\"><span class=\"ds-owner\">kajisho5 /</span> ffmpeg-skill</a><span class=\"ds-badge\">New</span><span class=\"ds-match\"><span class=\"ds-match-bar\"><span style=\"width:94%\"></span></span>94%</span></div><p class=\"ds-desc\">Local video editor for coding agents: 42 FFmpeg tools with a machine-readable contract and an MCP server.</p><p class=\"ds-why\">Because you follow <b>python, ai-agents, mcp</b> · you star a lot of <b>Python</b></p><div class=\"ds-foot\"><span class=\"ds-stat\">★ 7.5k</span><span class=\"ds-stat ds-hot\">↗ 100/day</span><span class=\"ds-stat\">Python</span><span class=\"ds-age\">created 2mo ago</span></div></article>",
+      "css": ".ds-card { background: var(--surface); border: 1px solid var(--line); border-radius: 12px; padding: 16px 18px 14px; color: var(--ink); font: 400 15px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; transition: border-color 0.15s; max-width: 760px; } .ds-card:hover { border-color: var(--ink-3); } .ds-card-head { display: flex; align-items: center; gap: 10px; } .ds-avatar { width: 32px; height: 32px; border-radius: 8px; background: var(--chip); flex-shrink: 0; } .ds-name { font-weight: 700; font-size: 16px; color: inherit; text-decoration: none; } .ds-name:hover { text-decoration: underline; } .ds-name:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; border-radius: 4px; } .ds-owner { font-weight: 400; color: var(--ink-2); } .ds-badge { background: var(--accent-soft); color: var(--accent); font-size: 11px; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; padding: 1px 8px; border-radius: 999px; } .ds-match { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; font: 400 12px ui-monospace, 'SF Mono', Menlo, monospace; color: var(--ink-3); } .ds-match-bar { width: 44px; height: 5px; border-radius: 3px; background: var(--bar); overflow: hidden; } .ds-match-bar span { display: block; height: 100%; background: var(--accent); } .ds-desc { margin: 8px 0 0; } .ds-why { margin: 6px 0 0; font-size: 13px; color: var(--ink-2); } .ds-why b { font-weight: 600; color: var(--ink); } .ds-foot { display: flex; flex-wrap: wrap; gap: 6px 14px; margin-top: 12px; align-items: center; } .ds-stat { font: 400 12.5px ui-monospace, 'SF Mono', Menlo, monospace; color: var(--ink-2); } .ds-hot { color: var(--good); } .ds-age { font-size: 13px; color: var(--ink-3); }"
+    },
+    {
+      "name": "Taste Bars",
+      "kind": "custom",
+      "refersTo": "taste-bar",
+      "description": "Sidebar profile: weighted bars that double as facet filters.",
+      "html": "<section class=\"ds-taste\"><h2>Topics</h2><ul class=\"ds-bars\"><li><button class=\"ds-bar ds-bar-active\"><span class=\"ds-bar-fill\" style=\"width:100%\"></span><span class=\"ds-bar-label\">ai</span></button></li><li><button class=\"ds-bar\"><span class=\"ds-bar-fill\" style=\"width:74%\"></span><span class=\"ds-bar-label\">llm</span></button></li><li><button class=\"ds-bar\"><span class=\"ds-bar-fill\" style=\"width:52%\"></span><span class=\"ds-bar-label\">python</span></button></li></ul></section>",
+      "css": ".ds-taste { width: 240px; font-size: 13px; } .ds-taste h2 { margin: 0 0 8px; font: 700 11px/1.5 system-ui, -apple-system, sans-serif; letter-spacing: 0.08em; text-transform: uppercase; color: var(--ink-3); } .ds-bars { list-style: none; margin: 0; padding: 0; display: grid; gap: 3px; } .ds-bar { position: relative; display: block; width: 100%; text-align: left; border: 0; border-radius: 6px; background: var(--bar); padding: 3px 8px; cursor: pointer; overflow: hidden; color: var(--ink); } .ds-bar-fill { position: absolute; inset: 0 auto 0 0; background: var(--bar-fill); border-radius: 6px; } .ds-bar-label { position: relative; font: 400 12px/1.5 ui-monospace, 'SF Mono', Menlo, monospace; } .ds-bar:hover .ds-bar-label, .ds-bar-active .ds-bar-label { font-weight: 700; } .ds-bar-active { outline: 2px solid var(--accent); outline-offset: -2px; } .ds-bar:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }"
+    },
+    {
+      "name": "Toast",
+      "kind": "custom",
+      "refersTo": "toast",
+      "description": "Floating ink pill confirming an action, with Undo.",
+      "html": "<div class=\"ds-toast\" role=\"status\"><span>Hid <b>owner/repo</b></span><button class=\"ds-link\">Undo</button></div>",
+      "css": ".ds-toast { display: inline-flex; gap: 14px; align-items: center; background: var(--ink); color: var(--bg); padding: 10px 16px; border-radius: 999px; font: 400 13px/1.5 system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; box-shadow: 0 6px 24px rgb(0 0 0 / 0.2); } .ds-link { background: none; border: 0; padding: 0; color: var(--bar-fill); font: inherit; font-weight: 600; cursor: pointer; } .ds-link:hover { text-decoration: underline; } .ds-link:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }"
+    }
+  ],
+  "narrative": {
+    "northStar": "The Morning Digest",
+    "overview": "Better Explore should read like a short, warm daily briefing: open it, take in what's new, act on two or three things, close it. Everything serves a two-minute skim. The page is calm and slightly warm, like newsprint in the light theme and a dim reading room in the dark one. The content does the talking: repo names, the \"Because …\" line and the numbers lead, and the controls step back.\n\nThe system is quiet on purpose. Surfaces are flat and separated by thin rules, not shadows. There is one warm accent, Kiln Orange, and it only marks things that are about you. Measured data (topics, languages, star counts, rates, match %) is set in monospace, which gives the digest a quiet ledger-like precision without becoming a dashboard. Controls are soft pills that sit low in the hierarchy.\n\nDark is the primary theme. It is where the screenshot lives and where the owner reads it. The light theme is a full equal in structure and token roles, and every change must still work in both.",
+    "keyCharacteristics": [
+      "Warm off-black and paper neutrals with a slight yellow cast, never pure grey.",
+      "One accent (Kiln Orange) reserved for personal relevance; one functional green reserved for momentum.",
+      "System sans for reading, system monospace for data. No web fonts.",
+      "Flat surfaces, 1px rules, shadows only on things that float.",
+      "Pill controls, 12px cards, 6px data tags.",
+      "A single column of picks beside a sticky taste sidebar."
+    ],
+    "rules": [
+      { "name": "The It's-About-You Rule", "body": "Kiln Orange marks only personal relevance: what's new to you, topics you follow, how well a repo fits, what you starred, and the brand mark. It is never decoration, never a section header, never a hover colour.", "section": "colors" },
+      { "name": "The Green-Means-Momentum Rule", "body": "Momentum Green appears only on the stars-per-day rate. Don't use it for success toasts, \"online\" dots or positive deltas elsewhere.", "section": "colors" },
+      { "name": "The Mono-Is-Data Rule", "body": "Machine names and measurements (topics, languages, counts, rates, percentages) are set in monospace. Sentences and human phrasing (\"created 2mo ago\", \"Because you follow …\") stay in sans.", "section": "typography" },
+      { "name": "The No Big Type Rule", "body": "Nothing on the feed is larger than 17px. Hierarchy comes from weight, Ink level and position, not size.", "section": "typography" },
+      { "name": "The One-Column-of-Picks Rule", "body": "Picks are a single ranked list, one card per row. No masonry, no multi-column card grids: rank order is the information.", "section": "layout" },
+      { "name": "The Only-Floaters-Cast-Shadows Rule", "body": "A shadow means \"this sits above the page\": a toast, a selected thumb, a future popover. Cards, sidebars and inputs never cast one.", "section": "elevation" },
+      { "name": "The Pill-Card-Tag Rule", "body": "Pill (999px) for controls, card (12px) for containers, tag (6px) for data. A new element takes the radius of its kind; no in-between values.", "section": "shapes" }
+    ],
+    "dos": [
+      "Do design and check in the dark theme first, then confirm the light theme with the `-light-theme` token counterparts.",
+      "Do keep Kiln Orange for personal relevance (new, followed, fit, starred, brand mark) per the It's-About-You Rule.",
+      "Do set every count, rate, topic, language and percentage in the system monospace.",
+      "Do separate surfaces with 1px Rule borders and tonal steps (Page → Surface → Chip).",
+      "Do use pill (999px) for controls, 12px for containers and 6px for data tags.",
+      "Do keep the feed a single ranked column, with the reason for each pick visible on the card."
+    ],
+    "donts": [
+      "Don't introduce a second accent hue; status and emphasis come from Ink levels, weight and Kiln Orange.",
+      "Don't use Momentum Green for anything other than stars-per-day.",
+      "Don't put shadows on cards, the sidebar or inputs; only floating elements cast them.",
+      "Don't set anything on the feed larger than 17px or add display-size headings.",
+      "Don't use pure grey (#808080-style) neutrals; the ladder is warm.",
+      "Don't add web fonts; the system sans and mono stacks are part of the zero-dependency setup."
+    ]
+  }
+}

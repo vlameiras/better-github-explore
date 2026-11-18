@@ -15,7 +15,7 @@ npm start        # http://localhost:4321
 npm test
 ```
 
-The server listens on localhost only and refreshes the feed every 6 hours. State (dismissed repos, "seen" marker) is kept in `data/state.json`.
+The server listens on localhost only and refreshes the feed every 6 hours. State (dismissed repos, the time you last left the page) is kept in `data/state.json`.
 
 ## Settings (environment variables)
 
