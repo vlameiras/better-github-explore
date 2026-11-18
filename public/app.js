@@ -90,7 +90,8 @@ function visibleItems() {
     );
   }
   const by = {
-    score: (a, b) => b.score - a.score,
+    score: (a, b) => b.score - a.score, // fit blended with momentum: the feed's own ranking
+    match: (a, b) => b.relevance - a.relevance || b.score - a.score, // the "% match" shown on cards
     momentum: (a, b) => b.starsPerDay - a.starsPerDay,
     newest: (a, b) => Date.parse(b.createdAt) - Date.parse(a.createdAt),
   }[ui.sort];

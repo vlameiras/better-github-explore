@@ -32,7 +32,7 @@ The ranking comes from the owner's own star history, not from global popularity.
 ## Capabilities and Constraints
 
 - Views: For you, New (with a count), This week, Dismissed.
-- Sorting: Best match (score), Fastest rising (stars per day), Newest.
+- Sorting: Recommended (score: fit blended with momentum), Best match (the % match shown on cards), Fastest rising (stars per day), Newest.
 - Each card shows the owner avatar, name, New and Fork badges, a match percentage, the description, the "Because …" reasons, up to 8 topic chips (matched topics highlighted), stars, stars per day, language and repo age.
 - Actions: Star or unstar (writes to GitHub), "Not interested" / Restore, both with undo in a toast. Topic chips and the taste-profile bars work as one-at-a-time facet filters.
 - A taste-profile sidebar shows the learned topics (top 14) and languages (top 6) as weighted bars.
