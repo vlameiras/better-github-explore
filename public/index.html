@@ -61,6 +61,24 @@
     </section>
 
     <div class="wrap layout" id="app" hidden>
+      <section class="own" id="own-banner" aria-labelledby="own-title" hidden>
+        <div class="own-text">
+          <h2 id="own-title">These are <span id="own-owner"></span>’s picks</h2>
+          <p>Ranked by their GitHub stars. Enter your username to get picks ranked by yours.</p>
+        </div>
+        <form class="own-form" id="own-form" novalidate>
+          <div class="setup-row">
+            <label class="handle-field">
+              <span aria-hidden="true">@</span>
+              <input name="handle" autocomplete="username" autocapitalize="none" spellcheck="false" placeholder="your-username" aria-label="Your GitHub username" />
+            </label>
+            <button class="btn" type="submit">Build my feed</button>
+          </div>
+          <p class="setup-error" role="alert" hidden></p>
+          <p class="own-note">Takes a couple of minutes the first time. Saved in your browser.</p>
+        </form>
+      </section>
+
       <aside class="taste" id="taste" aria-label="Your taste profile"></aside>
 
       <main>

@@ -483,6 +483,8 @@ function showApp() {
   $('#setup').hidden = true;
   $('#app').hidden = false;
   $('#refresh').hidden = viewingDaily(); // the daily feed is rebuilt by GitHub Actions, not here
+  $('#own-banner').hidden = !viewingDaily();
+  if (viewingDaily()) $('#own-owner').textContent = `@${daily.viewer.login}`;
   $('#switch').hidden = mode.local;
 }
 
@@ -496,16 +498,19 @@ $('#setup-cancel').onclick = () => {
   render();
 };
 
-$('#setup-form').onsubmit = async (e) => {
-  e.preventDefault();
+// Both handle forms (the setup screen and the banner on the daily feed) work the same way.
+async function submitHandle(form) {
+  const input = form.querySelector('input');
+  const button = form.querySelector('button[type=submit]');
+  const error = form.querySelector('[role=alert]');
   const fail = (msg) => {
-    $('#setup-error').hidden = false;
-    $('#setup-error').textContent = msg;
-    $('#setup-go').disabled = false;
+    error.hidden = false;
+    error.textContent = msg;
+    button.disabled = false;
   };
-  const handle = parseHandle($('#handle').value);
+  const handle = parseHandle(input.value);
   if (!handle) return fail('That doesn’t look like a GitHub username.');
-  $('#setup-go').disabled = true;
+  button.disabled = true;
   try {
     const user = await client.user(handle);
     if (user.type === 'Organization') return fail(`@${user.login} is an organization. Organizations can’t star repos; try a person’s account.`);
@@ -519,7 +524,14 @@ $('#setup-form').onsubmit = async (e) => {
   } catch (err) {
     fail(err.status === 404 ? `There’s no GitHub user called @${handle}.` : describe(err));
   }
-};
+}
+
+for (const form of [$('#setup-form'), $('#own-form')]) {
+  form.onsubmit = (e) => {
+    e.preventDefault();
+    submitHandle(form);
+  };
+}
 
 // --- Start ---
 

@@ -127,6 +127,25 @@ a.btn { display: inline-block; text-decoration: none; }
   padding: 8px 2px;
 }
 .setup-row .btn { padding-inline: 18px; }
+
+/* On the daily feed: whose picks these are, and how to get your own */
+.own {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 340px);
+  gap: 12px 24px;
+  align-items: center;
+  grid-column: 1 / -1; /* above the sidebar too, so phones see it first */
+  padding: 16px 18px;
+  border: 1px solid var(--accent);
+  border-radius: var(--radius);
+  background: var(--accent-soft);
+}
+.own h2 { margin: 0 0 2px; font-size: 16px; letter-spacing: -0.01em; }
+.own p { margin: 0; font-size: 13px; color: var(--ink-2); }
+.own .setup-row { margin-top: 0; }
+.own .handle-field { background: var(--surface); }
+.own .setup-error { margin-top: 8px; color: var(--accent); font-weight: 600; }
+.own .own-note { margin-top: 6px; color: var(--ink-3); font-size: 12px; }
 .setup-card .setup-error { margin-top: 10px; color: var(--accent); font-size: 13px; font-weight: 600; }
 .setup-card .setup-note { margin-top: 16px; font-size: 13px; color: var(--ink-3); }
 .setup-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; font-size: 13px; }
@@ -340,6 +359,7 @@ input[type='search'] { width: 180px; }
   .setup { padding-block: 32px 48px; }
   .setup-card { padding: 22px 18px 20px; }
   .setup-row { flex-direction: column; }
+  .own { grid-template-columns: 1fr; }
 }
 
 /* Phones: the account button doesn't fit beside the title, so the actions take their own row. */
