@@ -3,6 +3,8 @@ name: Deploy to GitHub Pages
 on:
   push:
     branches: [main]
+  schedule:
+    - cron: '17 5 * * *' # daily feed, 05:17 UTC
   workflow_dispatch:
 
 permissions:
@@ -26,7 +28,19 @@ jobs:
         with:
           node-version: 20
       - run: npm test
-      - uses: actions/configure-pages@v5
+      - id: pages
+        uses: actions/configure-pages@v5
+      # The feed visitors see first: the repo owner's public stars, scanned ahead of time.
+      # If the scan fails, keep the feed that is live now rather than deploying without one.
+      - name: Build the daily feed
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+          DAILY_LOGIN: ${{ github.repository_owner }}
+          PAGES_URL: ${{ steps.pages.outputs.base_url }}
+        run: |
+          node scripts/build-daily.mjs "$DAILY_LOGIN" public/daily.json \
+            || curl -fsSL "$PAGES_URL/daily.json" -o public/daily.json \
+            || echo "::warning::No daily feed in this deploy"
       # public/ is the whole site; the server is only for local mode.
       - uses: actions/upload-pages-artifact@v3
         with:

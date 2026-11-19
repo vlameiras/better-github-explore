@@ -118,3 +118,20 @@ test('starred reads the page count from the Link header and stops at the limit',
     globalThis.fetch = realFetch;
   }
 });
+
+test('the client sends a token only when given one', async () => {
+  const seen = [];
+  const realFetch = globalThis.fetch;
+  globalThis.fetch = async (url, opts) => {
+    seen.push(opts.headers);
+    return new Response('{}');
+  };
+  try {
+    await createClient().user('a');
+    await createClient({ token: 't0k' }).user('a');
+  } finally {
+    globalThis.fetch = realFetch;
+  }
+  assert.equal(seen[0].Authorization, undefined);
+  assert.equal(seen[1].Authorization, 'Bearer t0k');
+});

@@ -129,7 +129,8 @@ a.btn { display: inline-block; text-decoration: none; }
 .setup-row .btn { padding-inline: 18px; }
 .setup-card .setup-error { margin-top: 10px; color: var(--accent); font-size: 13px; font-weight: 600; }
 .setup-card .setup-note { margin-top: 16px; font-size: 13px; color: var(--ink-3); }
-#setup-cancel { margin-top: 14px; font-size: 13px; }
+.setup-links { display: flex; flex-wrap: wrap; gap: 8px 18px; margin-top: 14px; font-size: 13px; }
+.setup-links:not(:has(button:not([hidden]))) { display: none; }
 
 /* Layout */
 .layout { display: grid; grid-template-columns: 240px minmax(0, 1fr); gap: 32px; padding-block: 24px 64px; }

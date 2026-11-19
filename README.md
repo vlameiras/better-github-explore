@@ -10,11 +10,13 @@ It runs in two ways from the same page in `public/`.
 
 ## Hosted (GitHub Pages)
 
-Open the page and enter a GitHub username. The browser reads that account's public stars straight from GitHub's API and keeps the feed, dismissed repos and last visit in `localStorage`. Nothing else is stored or sent anywhere.
+Visitors first see a daily feed built from the repo owner's public stars. GitHub Actions builds it every morning (05:17 UTC) and on every deploy, and publishes it as `daily.json` next to the page, so it opens with no wait. Dismissing picks there is remembered per visitor.
+
+To use their own stars instead, visitors press **Use your own stars** and enter a GitHub username. The browser reads that account's public stars straight from GitHub's API and keeps the feed, dismissed repos and last visit in `localStorage`. Nothing else is stored or sent anywhere.
 
 Without a token, GitHub allows 60 API requests an hour and 10 searches a minute per visitor, so a refresh takes about 2 minutes. Picks appear as they're found. Starring opens the repo on GitHub.
 
-To publish: push to `main`, then in the repo's **Settings → Pages** set **Source** to **GitHub Actions**. `.github/workflows/pages.yml` runs the tests and deploys `public/`.
+To publish: push to `main`, then in the repo's **Settings → Pages** set **Source** to **GitHub Actions**. `.github/workflows/pages.yml` runs the tests, builds the daily feed and deploys `public/`. GitHub turns off scheduled workflows after 60 days without commits to the repo, so if the daily feed stops updating, re-enable it on the Actions tab.
 
 ## Local (your own token)
 

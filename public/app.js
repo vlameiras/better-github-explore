@@ -12,10 +12,13 @@ const ui = { view: 'new', sort: 'score', q: '', facet: null }; // facet: { kind:
 const store = createStore();
 
 // Two modes, one page. Local (`npm start`): GitHub calls go through the server's token proxy, so
-// private stars and starring work. Hosted (GitHub Pages): public data for a handle you enter.
+// private stars and starring work. Hosted (GitHub Pages): visitors first see the owner's daily
+// feed, built ahead of time by GitHub Actions (daily.json), and can switch to their own handle,
+// which is then scanned in the browser with public data.
 let mode = { local: false, settings: DEFAULTS };
 let client;
-let account; // storage key: 'local', or 'user:<login>'
+let daily = null; // the published daily feed, when the site has one
+let account; // storage key: 'local', 'daily:<login>' or 'user:<login>'
 let state; // persisted per account
 let run = null; // while refreshing: { done, total, feed, waitUntil }
 let data = null; // what render() draws, derived from state and run
@@ -193,6 +196,8 @@ function renderTaste() {
 }
 
 
+const viewingDaily = () => account?.startsWith('daily:');
+
 const whose = () => (mode.local || !data.viewer ? 'your' : `<b>@${esc(data.viewer.login)}</b>’s`);
 
 // The current feed for drawing. During the very first refresh, partial picks show as they arrive;
@@ -216,7 +221,8 @@ function renderStatus() {
   const newCount = live.filter(isNew).length;
   const wait = run?.waitUntil ? Math.max(0, Math.ceil((run.waitUntil - Date.now()) / 1000)) : 0;
 
-  $('#status').textContent = refreshing
+  const prefix = viewingDaily() && !lastError ? `Daily picks from @${data.viewer.login} · ` : '';
+  const text = refreshing
     ? wait
       ? `Waiting for GitHub’s search limit · resuming in ${wait}s`
       : run.total
@@ -227,6 +233,7 @@ function renderStatus() {
       : lastRefresh
         ? `${ui.view === 'all' ? `${live.length} picks · ` : ''}${newCount ? `${newCount} new` : 'Nothing new'} · updated ${ago(lastRefresh)}`
         : 'Not refreshed yet';
+  $('#status').textContent = prefix + text;
   $('#status').classList.toggle('error', Boolean(lastError) && !refreshing);
 }
 
@@ -246,7 +253,7 @@ function render() {
     me.hidden = false;
     me.href = viewer.url;
     me.innerHTML = `<img src="${esc(viewer.avatar)}&s=64" alt="${esc(viewer.login)}" width="28" height="28" />`;
-    if (!mode.local) $('#switch').textContent = `@${viewer.login}`;
+    if (!mode.local) $('#switch').textContent = viewingDaily() ? 'Use your own stars' : `@${viewer.login}`;
   }
 
   $('#new-count').textContent = newCount || '';
@@ -289,7 +296,38 @@ function onWait(until) {
   renderStatus();
 }
 
+// Daily feed: nothing to scan, just pick up the latest published file.
+async function loadDaily() {
+  try {
+    const res = await fetch('daily.json', { cache: 'no-cache' });
+    const json = res.ok ? await res.json() : null;
+    return json?.feed && json.viewer ? json : null;
+  } catch {
+    return null;
+  }
+}
+
+function applyDaily() {
+  Object.assign(state, {
+    viewer: daily.viewer,
+    profile: daily.profile,
+    feed: daily.feed,
+    lastRefresh: daily.generatedAt,
+    lastError: null,
+    checkedAt: Date.now(),
+  });
+  save();
+}
+
+async function refreshDaily() {
+  const latest = await loadDaily();
+  if (latest) daily = latest;
+  applyDaily();
+  render();
+}
+
 async function refresh() {
+  if (viewingDaily()) return refreshDaily();
   if (run) return;
   run = { done: 0, total: 0, feed: null, profile: null, waitUntil: 0 };
   render();
@@ -320,7 +358,10 @@ async function refresh() {
   }
 }
 
-const isStale = () => !state.lastRefresh || Date.now() - state.lastRefresh > mode.settings.refreshHours * 3_600_000;
+const isStale = () =>
+  viewingDaily()
+    ? Date.now() - (state.checkedAt ?? 0) > 3_600_000 // look for a newer daily.json at most hourly
+    : !state.lastRefresh || Date.now() - state.lastRefresh > mode.settings.refreshHours * 3_600_000;
 
 let toastTimer;
 function toast(html, onUndo) {
@@ -423,7 +464,11 @@ function showSetup({ error, canCancel = false } = {}) {
   $('#app').hidden = true;
   $('#refresh').hidden = true;
   $('#switch').hidden = true;
+  $('#me').hidden = true; // render() shows it again on the way back
   $('#setup-cancel').hidden = !canCancel;
+  const backToDaily = $('#setup-daily');
+  backToDaily.hidden = !daily || viewingDaily();
+  if (daily) backToDaily.textContent = `Or browse @${daily.viewer.login}’s daily picks`;
   $('#status').textContent = 'Discovery ranked by GitHub stars';
   $('#status').classList.remove('error');
   const err = $('#setup-error');
@@ -437,11 +482,15 @@ function showSetup({ error, canCancel = false } = {}) {
 function showApp() {
   $('#setup').hidden = true;
   $('#app').hidden = false;
-  $('#refresh').hidden = false;
+  $('#refresh').hidden = viewingDaily(); // the daily feed is rebuilt by GitHub Actions, not here
   $('#switch').hidden = mode.local;
 }
 
 $('#switch').onclick = () => showSetup({ canCancel: true });
+$('#setup-daily').onclick = () => {
+  store.setHandle(null);
+  location.reload();
+};
 $('#setup-cancel').onclick = () => {
   showApp();
   render();
@@ -507,9 +556,16 @@ async function boot() {
     return openAccount('local');
   }
 
+  daily = await loadDaily();
   const handle = store.handle();
-  if (!handle) return showSetup();
-  openAccount(`user:${handle.toLowerCase()}`);
+  if (handle) return openAccount(`user:${handle.toLowerCase()}`);
+  if (!daily) return showSetup();
+  account = `daily:${daily.viewer.login.toLowerCase()}`;
+  state = store.load(account);
+  applyDaily();
+  resolveBaseline();
+  showApp();
+  render();
 }
 
 boot();

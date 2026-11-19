@@ -10,19 +10,23 @@ export function assertRepoName(fullName) {
 
 /**
  * GitHub REST client that runs in the browser. `base` is either api.github.com (public data,
- * no token) or the local server's `gh` proxy, which adds your token on the way through.
+ * no token) or the local server's `gh` proxy, which adds your token on the way through. The
+ * daily build runs it in Node with a token.
  *
  * Search has its own rate limit (10/min without a token, 30/min with one). The client tracks it
  * from response headers and waits for the reset instead of failing; `onWait(untilMs)` reports
  * the pause (0 when it ends) so the page can say what's happening.
  */
-export function createClient({ base = 'https://api.github.com', onWait = () => {}, sleep } = {}) {
+export function createClient({ base = 'https://api.github.com', token, onWait = () => {}, sleep } = {}) {
   sleep ??= (ms) => new Promise((r) => setTimeout(r, ms));
   const searchLimit = { remaining: Infinity, reset: 0 };
 
   async function request(path, { method = 'GET', accept = 'application/vnd.github+json' } = {}) {
-    // Only safelisted headers, so cross-origin GETs to api.github.com need no CORS preflight.
-    const res = await fetch(base + path, { method, headers: { Accept: accept } });
+    // In the browser: only safelisted headers, so cross-origin GETs need no CORS preflight.
+    // A token is only passed by the scheduled build that publishes the daily feed.
+    const headers = { Accept: accept };
+    if (token) Object.assign(headers, { Authorization: `Bearer ${token}`, 'User-Agent': 'better-github-explore' });
+    const res = await fetch(base + path, { method, headers });
     if (!res.ok) {
       let detail = res.statusText;
       try {

@@ -25,7 +25,7 @@ The ranking comes from the owner's own star history, not from global popularity.
 ## Operating Context
 
 - **Daily skim.** The owner opens the tab about once a day, checks **New** (created in the last 48 hours), opens or stars a few repos, dismisses the rest, and leaves. **This week** (last 7 days), topic and language facets, text filter and sort are secondary.
-- Two modes, one static page in `public/`. Hosted (GitHub Pages): the visitor enters a handle and the browser calls GitHub's public API with no token, so a refresh takes a couple of minutes and starring links out to GitHub. Local (`npm start`, `localhost:4321`): the server proxies GitHub with the owner's token, so private stars and starring work and a refresh takes under a minute.
+- Two modes, one static page in `public/`. Hosted (GitHub Pages): visitors land on the owner's daily feed, prebuilt by GitHub Actions from public stars (`daily.json`), and can switch to their own handle; the browser then calls GitHub's public API with no token, so a refresh takes a couple of minutes and starring links out to GitHub. Local (`npm start`, `localhost:4321`): the server proxies GitHub with the owner's token, so private stars and starring work and a refresh takes under a minute.
 - The feed refreshes in the browser when the page is opened or shown and is older than 6 hours. A manual Refresh is available. Picks appear while the first refresh is still running.
 - Authentication uses the GitHub CLI login (`gh auth login`) or `GITHUB_TOKEN`. Starring from the feed writes a real star to the owner's GitHub account.
 
